@@ -14,12 +14,9 @@ const { day } = Astro.params;
 const dayNorm = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : '';
 
 const crossref = await buildCrossref();
-const ids = (dayNorm && crossref.byDigestDay[dayNorm]) ?? [];
-const items = ids
-  .map((id) => {
-    const meta = crossref.byPost[id];
-    return meta ? ({ id, ...meta } as any) : null;
-  })
+const urls = (dayNorm && crossref.byDigestDay[dayNorm]) ?? [];
+const items = urls
+  .map((url) => crossref.byPost[url])
   .filter(Boolean);
 
 const digestJsonUrl = dayNorm ? `${XO_DIGEST_BASE}/vault/daily/digest.${encodeURIComponent(dayNorm)}.json` : null;
@@ -68,7 +65,10 @@ const validateUrl = dayNorm
     )}
 
     <div class="hr" style="margin: 1.25rem 0;" />
-    <a href="/posts/" class="muted">← Back to posts</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+      <a href="/posts/" class="muted">← Back to posts</a>
+      <a href="/crossref.json" class="muted">crossref.json →</a>
+    </div>
   </div>
   <Footer />
 </Base>

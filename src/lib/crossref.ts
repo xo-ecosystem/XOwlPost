@@ -2,59 +2,66 @@ import { getCollection } from 'astro:content';
 import { normalizeDigestDay } from './xo_chain';
 
 export type Crossref = {
-  byDigestDay: Record<string, string[]>;
   byPost: Record<
     string,
     {
-      url: string;
+      id: string;
       title: string;
+      url: string;
       pubDate: string;
-      digest_day?: string;
-      ledger_day?: string;
       vault_url?: string | null;
+      ledger_day?: string;
+      digest_day?: string;
     }
   >;
+  byDigestDay: Record<string, string[]>; // day → post URLs
 };
 
-/** Single source of truth for digest day ↔ posts. Used by /crossref.json and /digest/[day]. */
+/**
+ * Single source of truth for digest day ↔ posts. Purely generated; no manual edits.
+ * Digest day: frontmatter.digest_day if present/valid, else pubDate (YYYY-MM-DD).
+ * Option B: invalid digest_day → fallback to pubDate; invalid pubDate → omit digest linking.
+ */
 export async function buildCrossref(): Promise<Crossref> {
   const posts = await getCollection('blog');
 
-  const byDigestDay: Record<string, string[]> = {};
   const byPost: Crossref['byPost'] = {};
+  const byDigestDay: Crossref['byDigestDay'] = {};
 
   for (const p of posts) {
     if (p.data.draft) continue;
 
-    const pubDate = new Date(p.data.pubDate);
-    const digest_day =
-      normalizeDigestDay(p.data.digest_day) ?? normalizeDigestDay(pubDate);
-    const ledger_day =
-      normalizeDigestDay(p.data.ledger_day) ?? normalizeDigestDay(pubDate);
     const url = `/posts/${p.id}/`;
+    const pubDate =
+      p.data.pubDate instanceof Date
+        ? p.data.pubDate
+        : new Date(p.data.pubDate);
 
-    byPost[p.id] = {
-      url,
+    const digestDay =
+      normalizeDigestDay(p.data.digest_day) ?? normalizeDigestDay(pubDate);
+    const ledgerDay =
+      normalizeDigestDay(p.data.ledger_day) ?? normalizeDigestDay(pubDate);
+
+    const item = {
+      id: p.id,
       title: p.data.title,
+      url,
       pubDate: pubDate.toISOString(),
-      digest_day: digest_day ?? undefined,
-      ledger_day: ledger_day ?? undefined,
       vault_url: p.data.vault_url ?? null,
+      ledger_day: ledgerDay ?? undefined,
+      digest_day: digestDay ?? undefined,
     };
 
-    if (digest_day) {
-      byDigestDay[digest_day] ??= [];
-      byDigestDay[digest_day].push(p.id);
+    byPost[url] = item;
+
+    if (digestDay) {
+      (byDigestDay[digestDay] ??= []).push(url);
     }
   }
 
   for (const day of Object.keys(byDigestDay)) {
-    byDigestDay[day].sort((a, b) => {
-      const A = byPost[a];
-      const B = byPost[b];
-      return +new Date(B.pubDate) - +new Date(A.pubDate);
-    });
+    byDigestDay[day].sort();
   }
 
-  return { byDigestDay, byPost };
+  return { byPost, byDigestDay };
 }
