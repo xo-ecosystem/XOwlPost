@@ -1,0 +1,28 @@
+name: XOwlPost Guard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  guard-crossref:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if dist/crossref.json is committed
+        run: |
+          if git ls-files | grep -q '^dist/crossref\.json$'; then
+            echo "❌ dist/crossref.json must not be committed."
+            exit 1
+          fi
+
+      - name: Fail if manual src/data/crossref.json exists
+        run: |
+          if git ls-files | grep -q '^src/data/crossref\.json$'; then
+            echo "❌ src/data/crossref.json is not allowed (crossref is generated)."
+            exit 1
+          fi
