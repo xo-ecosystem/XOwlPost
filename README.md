@@ -1,62 +1,92 @@
-# Astro Starter Kit: Blog
+# XOwlPost
+
+Signed posts linked to the XO chain: Vault → Ledger → Digest.
+
+- **Option A:** XO theme (Ink/Paper), clean post layout, Content Collections.
+- **Option B:** Per-post chain links (Vault, Ledger day, Merkle, PDF, Digest JSON, Validate), `/posts.json`, `/crossref.json`, RSS. No backend.
+
+## Local
 
 ```sh
-pnpm create astro@latest -- --template blog
+git clone git@github.com:xo-ecosystem/XOwlPost.git
+cd XOwlPost
+pnpm i
+pnpm dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Cloudflare Pages (single production branch)
 
-Features:
+- **Repo:** `xo-ecosystem/XOwlPost`
+- **Production branch:** `main`
+- **Build command:** `pnpm install --frozen-lockfile && pnpm build`
+- **Output directory:** `dist`
+- **Node version:** 18 or 20 (set in Pages → Settings → Environment variables or in `.nvmrc` / `ENGINE` in package.json if you prefer)
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+Required in repo root: `package.json`, `pnpm-lock.yaml`, `astro.config.mjs`, `src/`.
 
-## 🚀 Project Structure
+## Environment (optional)
 
-Inside of your Astro project, you'll see the following folders and files:
+Bases for chain links are env-driven with safe defaults. Set in Cloudflare Pages (Settings → Environment variables) to override:
 
-```text
-├── public/
-├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PUBLIC_XO_VAULT_BASE` | `https://xo-vault.com` | Vault root |
+| `PUBLIC_XO_LEDGER_BASE` | `https://xoledger.com` | Ledger root |
+| `PUBLIC_XO_DIGEST_BASE` | `https://xo-digest.com` | Digest root |
+
+Optional for build stamp (see below):
+
+| Variable | Injected by Pages | Purpose |
+|----------|-------------------|---------|
+| `CF_PAGES_COMMIT_SHA` | Yes | Commit of the deploy |
+| `CF_PAGES_BRANCH` | Yes | Branch name |
+| `BUILD_COMMIT` | You | Override commit in `/meta.json` |
+| `BUILD_BRANCH` | You | Override branch in `/meta.json` |
+
+## Build stamp (which deploy is live)
+
+Static equivalent of a `/_meta` endpoint:
+
+```bash
+curl -s https://your-site.pages.dev/meta.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+Returns `commit`, `branch`, and `builtAt`. On Cloudflare Pages, `CF_PAGES_COMMIT_SHA` and `CF_PAGES_BRANCH` are inlined at build time (see `astro.config.mjs`). Optional: set `BUILD_COMMIT` / `BUILD_BRANCH` in Pages env to override.
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Commands
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+| Command | Action |
+|--------|--------|
+| `pnpm dev` | Dev server at `localhost:4321` |
+| `pnpm build` | Production build to `./dist/` |
+| `pnpm preview` | Preview the build locally |
+| `pnpm new:post "Post Title"` | Create a new draft post in `src/content/blog/` with XO frontmatter (slug, `ledger_day`/`digest_day` = today, `draft: true`) |
 
-Any static assets, like images, can be placed in the `public/` directory.
+Draft posts (`draft: true`) are excluded from `/posts/`, homepage, RSS, `posts.json`, and `crossref.json`. Set `draft: false` or remove `draft` when publishing.
 
-## 🧞 Commands
+## Structure
 
-All commands are run from the root of the project, from a terminal:
+- `src/styles/xo.css` — XO theme tokens and utilities.
+- `src/layouts/Base.astro` — Global shell + XO CSS.
+- `src/layouts/Post.astro` — Single post + XO chain links.
+- `src/pages/index.astro` — Homepage + latest posts.
+- `src/pages/posts/` — Post list and `[...slug]` for single posts.
+- `src/pages/posts.json` — Index of all posts (for other tools).
+- `src/pages/crossref.json` — Post ↔ digest day mapping (uses shared `src/lib/crossref.ts`).
+- `src/pages/digest/[day].astro` — Day index: “Digest day YYYY-MM-DD” and list of posts referenced that day.
+- `src/pages/meta.json` — Build stamp (commit, branch, builtAt).
+- `src/lib/xo_chain.ts` — `isoDay()`, `normalizeDigestDay()` for canonical day handling.
+- `src/content/blog/` — Markdown/MDX; optional frontmatter: `vault_url`, `ledger_day`, `digest_day`, `draft`.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+## Post frontmatter (Option B)
 
-## 👀 Want to learn more?
+```yaml
+title: "Why XO Digest exists"
+description: "..."
+pubDate: "2026-02-21"
+vault_url: "https://xo-vault.com/vault/daily/index.html#2026-02-21"
+ledger_day: "2026-02-21"
+digest_day: "2026-02-21"   # optional
+```
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+Chain links and “Referenced by Digest day …” are derived from these + `pubDate`; no backend required.

@@ -1,0 +1,67 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { buildCrossref } from '../../lib/crossref';
+import { XO_DIGEST_BASE } from '../../consts';
+
+export async function getStaticPaths() {
+  const crossref = await buildCrossref();
+  return Object.keys(crossref.byDigestDay).map((day) => ({ params: { day } }));
+}
+
+const { day } = Astro.params;
+const crossref = await buildCrossref();
+const ids = (day && crossref.byDigestDay[day]) ?? [];
+const items = ids.map((id) => ({ id, ...crossref.byPost[id] })).filter(Boolean);
+
+const digestJsonUrl = day ? `${XO_DIGEST_BASE}/vault/daily/digest.${day}.json` : null;
+const validateUrl = day
+  ? `${XO_DIGEST_BASE}/vault/daily/validate/${day}`
+  : null;
+---
+
+<Base title={`Digest ${day} · XOwlPost`}>
+  <Fragment slot="head">
+    <meta name="description" content={`XOwlPost posts referenced by digest day ${day}.`} />
+  </Fragment>
+  <Header />
+  <div class="card" style="margin-top: 1.5rem;">
+    <p class="muted" style="margin: 0 0 0.25rem 0;">XOwlPost ↔ XO Digest</p>
+    <h1 style="margin: 0.5rem 0 1rem 0;">Digest day: {day}</h1>
+
+    {digestJsonUrl && (
+      <div style="margin: 0 0 1rem 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a class="pill" href={digestJsonUrl} target="_blank" rel="noopener noreferrer">Digest JSON</a>
+        {validateUrl && (
+          <a class="pill" href={validateUrl} target="_blank" rel="noopener noreferrer">Validate</a>
+        )}
+      </div>
+    )}
+
+    {items.length === 0 ? (
+      <p class="muted">No XOwlPost posts reference this digest day.</p>
+    ) : (
+      <ul style="padding-left: 1.25rem; margin: 0;">
+        {items.map((it) => (
+          <li style="margin: 0.75rem 0;">
+            <a href={it.url}>{it.title}</a>
+            <span class="muted" style="display: block; margin-top: 0.25rem; font-size: 0.875rem;">
+              {new Date(it.pubDate).toISOString().slice(0, 10)}
+              {it.vault_url && it.vault_url.startsWith('http') ? (
+                <>
+                  {' '}&#183;{' '}
+                  <a href={it.vault_url} target="_blank" rel="noopener noreferrer">Vault</a>
+                </>
+              ) : null}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <div class="hr" style="margin: 1.25rem 0;" />
+    <a href="/posts/" class="muted">← Back to posts</a>
+  </div>
+  <Footer />
+</Base>

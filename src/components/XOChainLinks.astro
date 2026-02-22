@@ -1,0 +1,75 @@
+---
+import { XO_LEDGER_BASE, XO_DIGEST_BASE } from '../consts';
+import { normalizeDigestDay } from '../lib/xo_chain';
+
+interface Props {
+  vaultUrl?: string;
+  ledgerDay?: string;
+  digestDay?: string;
+  pubDate?: Date;
+}
+
+const { vaultUrl, ledgerDay, digestDay, pubDate } = Astro.props;
+
+const digestDayNorm =
+  normalizeDigestDay(digestDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
+const ledgerDayNorm =
+  normalizeDigestDay(ledgerDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
+
+const digestJsonUrl = digestDayNorm
+  ? `${XO_DIGEST_BASE}/vault/daily/digest.${digestDayNorm}.json`
+  : undefined;
+const digestValidateUrl = digestDayNorm
+  ? `${XO_DIGEST_BASE}/vault/daily/validate/${digestDayNorm}`
+  : undefined;
+const ledgerDayUrl = ledgerDayNorm
+  ? `${XO_LEDGER_BASE}/ledger/day/${ledgerDayNorm}`
+  : undefined;
+const ledgerMerkleUrl = ledgerDayNorm
+  ? `${XO_LEDGER_BASE}/ledger/day/${ledgerDayNorm}/merkle`
+  : undefined;
+const ledgerPdfUrl = ledgerDayNorm
+  ? `${XO_LEDGER_BASE}/ledger/day/${ledgerDayNorm}/pdf`
+  : undefined;
+
+const hasAny =
+  vaultUrl || digestJsonUrl || ledgerDayUrl;
+---
+
+{hasAny && (
+  <nav class="card" aria-label="XO chain links" style="margin-top: 1.5rem;">
+    {digestDayNorm && (
+      <p class="muted" style="margin: 0 0 0.5rem 0; font-size: 0.875rem;">
+        Referenced by Digest day{' '}
+        <a href={`/digest/${digestDayNorm}/`}>{digestDayNorm}</a>
+        {digestValidateUrl && (
+          <>
+            {' '}&#183;{' '}
+            <a href={digestValidateUrl} target="_blank" rel="noopener noreferrer">validate</a>
+          </>
+        )}
+      </p>
+    )}
+    <p class="muted" style="margin: 0 0 0.75rem 0; font-size: 0.875rem;">Canonical chain</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      {vaultUrl && (
+        <a class="pill" href={vaultUrl} target="_blank" rel="noopener noreferrer">View in Vault</a>
+      )}
+      {ledgerDayUrl && (
+        <a class="pill" href={ledgerDayUrl} target="_blank" rel="noopener noreferrer">Ledger day</a>
+      )}
+      {ledgerMerkleUrl && (
+        <a class="pill" href={ledgerMerkleUrl} target="_blank" rel="noopener noreferrer">Merkle proof</a>
+      )}
+      {ledgerPdfUrl && (
+        <a class="pill" href={ledgerPdfUrl} target="_blank" rel="noopener noreferrer">PDF</a>
+      )}
+      {digestJsonUrl && (
+        <a class="pill" href={digestJsonUrl} target="_blank" rel="noopener noreferrer">Digest JSON</a>
+      )}
+      {digestValidateUrl && (
+        <a class="pill" href={digestValidateUrl} target="_blank" rel="noopener noreferrer">Digest validate</a>
+      )}
+    </div>
+  </nav>
+)}
