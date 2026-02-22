@@ -8,6 +8,8 @@ export const SITE_DESCRIPTION = 'Signed posts linked to the XO chain: Vault → 
 // Set in Cloudflare Pages (or .env): PUBLIC_XO_VAULT_BASE, PUBLIC_XO_LEDGER_BASE, PUBLIC_XO_DIGEST_BASE
 export const XO_VAULT_BASE =
   (import.meta.env.PUBLIC_XO_VAULT_BASE as string | undefined) ?? 'https://xo-vault.com';
+export const XO_VAULT_API_BASE =
+  (import.meta.env.PUBLIC_XO_VAULT_API_BASE as string | undefined)?.trim() || XO_VAULT_BASE;
 export const XO_LEDGER_BASE =
   (import.meta.env.PUBLIC_XO_LEDGER_BASE as string | undefined) ?? 'https://xoledger.com';
 export const XO_DIGEST_BASE =
