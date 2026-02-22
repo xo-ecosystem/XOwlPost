@@ -11,17 +11,24 @@ export async function getStaticPaths() {
 }
 
 const { day } = Astro.params;
-const crossref = await buildCrossref();
-const ids = (day && crossref.byDigestDay[day]) ?? [];
-const items = ids.map((id) => ({ id, ...crossref.byPost[id] })).filter(Boolean);
+const dayNorm = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : '';
 
-const digestJsonUrl = day ? `${XO_DIGEST_BASE}/vault/daily/digest.${day}.json` : null;
-const validateUrl = day
-  ? `${XO_DIGEST_BASE}/vault/daily/validate/${day}`
+const crossref = await buildCrossref();
+const ids = (dayNorm && crossref.byDigestDay[dayNorm]) ?? [];
+const items = ids
+  .map((id) => {
+    const meta = crossref.byPost[id];
+    return meta ? ({ id, ...meta } as any) : null;
+  })
+  .filter(Boolean);
+
+const digestJsonUrl = dayNorm ? `${XO_DIGEST_BASE}/vault/daily/digest.${encodeURIComponent(dayNorm)}.json` : null;
+const validateUrl = dayNorm
+  ? `${XO_DIGEST_BASE}/vault/daily/validate/${encodeURIComponent(dayNorm)}`
   : null;
 ---
 
-<Base title={`Digest ${day} · XOwlPost`}>
+<Base title={`Digest ${dayNorm || day} · XOwlPost`}>
   <Fragment slot="head">
     <meta name="description" content={`XOwlPost posts referenced by digest day ${day}.`} />
   </Fragment>

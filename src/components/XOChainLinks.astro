@@ -17,10 +17,10 @@ const ledgerDayNorm =
   normalizeDigestDay(ledgerDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
 
 const digestJsonUrl = digestDayNorm
-  ? `${XO_DIGEST_BASE}/vault/daily/digest.${digestDayNorm}.json`
+  ? `${XO_DIGEST_BASE}/vault/daily/digest.${encodeURIComponent(digestDayNorm)}.json`
   : undefined;
 const digestValidateUrl = digestDayNorm
-  ? `${XO_DIGEST_BASE}/vault/daily/validate/${digestDayNorm}`
+  ? `${XO_DIGEST_BASE}/vault/daily/validate/${encodeURIComponent(digestDayNorm)}`
   : undefined;
 const ledgerDayUrl = ledgerDayNorm
   ? `${XO_LEDGER_BASE}/ledger/day/${ledgerDayNorm}`
