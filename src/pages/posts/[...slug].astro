@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Post from '../../layouts/Post.astro';
+import { getCachedVaultBadgesIndex } from '../../lib/vault_proofs';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
@@ -18,8 +19,17 @@ interface Props {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+const postUrl = `/posts/${entry.id}/`;
+let vaultVerified = false;
+try {
+  const badges = await getCachedVaultBadgesIndex();
+  vaultVerified = badges[postUrl]?.verified ?? false;
+} catch {
+  // Vault unreachable or key placeholder; no badge
+}
 ---
 
-<Post entry={entry}>
+<Post entry={entry} postUrl={postUrl} vaultVerified={vaultVerified}>
   <Content />
 </Post>

@@ -7,9 +7,10 @@ interface Props {
   ledgerDay?: string;
   digestDay?: string;
   pubDate?: Date;
+  vaultVerified?: boolean;
 }
 
-const { vaultUrl, ledgerDay, digestDay, pubDate } = Astro.props;
+const { vaultUrl, ledgerDay, digestDay, pubDate, vaultVerified = false } = Astro.props;
 
 const digestDayNorm =
   normalizeDigestDay(digestDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
@@ -52,6 +53,12 @@ const hasAny =
     )}
     <p class="muted" style="margin: 0 0 0.75rem 0; font-size: 0.875rem;">Canonical chain</p>
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      {vaultUrl && vaultVerified && (
+        <span class="pill" aria-label="Vault verified" title="Verified by xo-vault proofs">Vault ✓</span>
+      )}
+      {vaultUrl && !vaultVerified && (
+        <span class="pill muted" aria-label="Vault unverified" title="Not present in xo-vault proofs yet">Vault ?</span>
+      )}
       {vaultUrl && (
         <a class="pill" href={vaultUrl} target="_blank" rel="noopener noreferrer">View in Vault</a>
       )}

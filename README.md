@@ -42,6 +42,7 @@ Optional for build stamp (see below):
 | `CF_PAGES_BRANCH` | Yes | Branch name |
 | `BUILD_COMMIT` | You | Override commit in `/meta.json` |
 | `BUILD_BRANCH` | You | Override branch in `/meta.json` |
+| `PUBLIC_XO_VAULT_PROOFS_STRICT` | — | Set to `1` to fail build when Vault proofs are missing/invalid (default: lenient, badge index `{}`) |
 
 ## Build stamp (which deploy is live)
 
@@ -76,6 +77,8 @@ Draft posts (`draft: true`) are excluded from `/posts/`, homepage, RSS, `posts.j
 - `src/pages/digest/[day].astro` — Day index: “Digest day YYYY-MM-DD” and list of posts referenced that day.
 - `src/pages/meta.json` — Build stamp (commit, branch, builtAt).
 - `src/lib/xo_chain.ts` — `isoDay()`, `normalizeDigestDay()` for canonical day handling.
+- **Vault badge (Phase A):** `src/lib/vault_proofs_key.ts` (Ed25519 public key, replace `REPLACE_ME`), `src/lib/vault_proofs.ts` (fetch + verify `XO_VAULT_BASE/vault/proofs/posts.json`), `src/pages/vault.badges.json` (build-time verified badges). Posts show “Vault Verified ✓” when the Vault-signed proof includes that post URL.
+- **Signed comments (Phase B):** `src/lib/comments/keys.ts` (client-only WebCrypto Ed25519 keypair in localStorage), `src/components/SignedComments.astro` (comment list + “Sign & Submit” to Vault Inbox). Submit goes to `XO_VAULT_BASE/api/inbox/submit`; comments are read from `XO_VAULT_BASE/vault/inbox/posts/<slug>/index.json`.
 - `src/content/blog/` — Markdown/MDX; optional frontmatter: `vault_url`, `ledger_day`, `digest_day`, `draft`.
 
 ## Post frontmatter (Option B)

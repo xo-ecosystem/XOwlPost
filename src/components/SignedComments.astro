@@ -1,0 +1,109 @@
+---
+import { XO_VAULT_API_BASE } from '../consts';
+
+interface Props {
+  postUrl: string;
+  vaultApiBase?: string;
+}
+
+const { postUrl, vaultApiBase = XO_VAULT_API_BASE } = Astro.props;
+---
+
+<div class="card" style="margin-top: 1.5rem;">
+  <h3 style="margin: 0 0 0.5rem 0;">Signed comments</h3>
+  <p class="muted" style="margin: 0 0 1rem 0;">No login. Your key stays in this browser.</p>
+
+  <textarea
+    id="xo_comment_body"
+    rows="4"
+    placeholder="Write a comment..."
+    style="width: 100%; box-sizing: border-box; resize: vertical;"
+  ></textarea>
+  <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; align-items: center;">
+    <button class="pill" id="xo_comment_submit" type="button">Sign & Submit</button>
+    <span class="muted" id="xo_comment_status"></span>
+  </div>
+
+  <div class="hr" style="margin: 1rem 0;" />
+  <div id="xo_comment_list" class="muted">Loading…</div>
+</div>
+
+<script define:vars={{ postUrl, vaultApiBase }}>
+  import { getOrCreateKeypair, signObject } from '../lib/comments/keys.js';
+
+  const status = document.getElementById('xo_comment_status');
+  const list = document.getElementById('xo_comment_list');
+  const bodyEl = document.getElementById('xo_comment_body');
+  const btn = document.getElementById('xo_comment_submit');
+
+  const apiBase = vaultApiBase.replace(/\/$/, '');
+  const submitUrl = `${apiBase}/api/inbox/submit`;
+
+  function slugFromPostUrl(p) {
+    return p.split('/').filter(Boolean).join('__') || 'unknown';
+  }
+  function inboxIndexUrl(slug) {
+    return `${apiBase}/vault/inbox/${slug}/index.json`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  async function load() {
+    try {
+      const slug = slugFromPostUrl(postUrl);
+      const res = await fetch(inboxIndexUrl(slug), { cache: 'no-store' });
+      if (!res.ok) {
+        list.textContent = 'No comments yet.';
+        return;
+      }
+      const idx = await res.json();
+      const items = (idx.items || []).slice(-25).reverse();
+      list.innerHTML = items.map((it) => `
+        <div style="margin: 0.75rem 0;">
+          <div>${escapeHtml(it.body || '')}</div>
+          <div class="muted" style="font-size: 0.875rem; margin-top: 0.25rem;">
+            ${escapeHtml(it.author?.fp || 'anon')} · ${escapeHtml(it.createdAt || '')}
+          </div>
+        </div>
+      `).join('') || 'No comments yet.';
+    } catch {
+      list.textContent = 'No comments yet.';
+    }
+  }
+
+  btn.addEventListener('click', async () => {
+    status.textContent = 'Signing…';
+    try {
+      const { privJwk, pubB64 } = await getOrCreateKeypair();
+      const fp = pubB64.slice(0, 10);
+      const payload = {
+        v: 1,
+        post: postUrl,
+        createdAt: new Date().toISOString(),
+        body: String(bodyEl.value || '').slice(0, 2000),
+        author: { pub: pubB64, fp },
+        nonce: crypto.getRandomValues(new Uint32Array(4)).join('-'),
+      };
+      const sig = await signObject(payload, privJwk);
+      const msg = { ...payload, sig };
+
+      status.textContent = 'Submitting…';
+      const res = await fetch(submitUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(msg),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      bodyEl.value = '';
+      status.textContent = 'Posted.';
+      await load();
+      setTimeout(() => { status.textContent = ''; }, 1500);
+    } catch (e) {
+      status.textContent = 'Failed.';
+    }
+  });
+
+  load();
+</script>
