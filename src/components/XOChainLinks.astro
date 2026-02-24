@@ -1,5 +1,5 @@
 ---
-import { XO_LEDGER_BASE, XO_DIGEST_BASE } from '../consts';
+import { XO_DIGEST_BASE, XO_LEDGER_BASE, XO_VAULT_BASE } from '../consts';
 import { normalizeDigestDay } from '../lib/xo_chain';
 
 interface Props {
@@ -16,6 +16,11 @@ const digestDayNorm =
   normalizeDigestDay(digestDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
 const ledgerDayNorm =
   normalizeDigestDay(ledgerDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
+
+const viewerBase = XO_VAULT_BASE.replace(/\/$/, '');
+const viewInVaultHref =
+  vaultUrl ||
+  (ledgerDayNorm ? `${viewerBase}/vault/daily/index.html#${ledgerDayNorm}` : undefined);
 
 const digestJsonUrl = digestDayNorm
   ? `${XO_DIGEST_BASE}/vault/daily/digest.${encodeURIComponent(digestDayNorm)}.json`
@@ -34,7 +39,7 @@ const ledgerPdfUrl = ledgerDayNorm
   : undefined;
 
 const hasAny =
-  vaultUrl || digestJsonUrl || ledgerDayUrl;
+  viewInVaultHref || digestJsonUrl || ledgerDayUrl;
 ---
 
 {hasAny && (
@@ -53,14 +58,14 @@ const hasAny =
     )}
     <p class="muted" style="margin: 0 0 0.75rem 0; font-size: 0.875rem;">Canonical chain</p>
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-      {vaultUrl && vaultVerified && (
+      {viewInVaultHref && vaultVerified && (
         <span class="pill" aria-label="Vault verified" title="Verified by xo-vault proofs">Vault ✓</span>
       )}
-      {vaultUrl && !vaultVerified && (
+      {viewInVaultHref && !vaultVerified && (
         <span class="pill muted" aria-label="Vault unverified" title="Not present in xo-vault proofs yet">Vault ?</span>
       )}
-      {vaultUrl && (
-        <a class="pill" href={vaultUrl} target="_blank" rel="noopener noreferrer">View in Vault</a>
+      {viewInVaultHref && (
+        <a class="pill" href={viewInVaultHref} target="_blank" rel="noopener noreferrer">View in Vault</a>
       )}
       {ledgerDayUrl && (
         <a class="pill" href={ledgerDayUrl} target="_blank" rel="noopener noreferrer">Ledger day</a>

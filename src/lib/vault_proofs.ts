@@ -1,4 +1,4 @@
-import { XO_VAULT_BASE } from '../consts';
+import { XO_VAULT_API_BASE } from '../consts';
 import { XO_VAULT_PROOFS_PUB_B64 } from './vault_proofs_key';
 
 export type ProofPost = {
@@ -46,7 +46,7 @@ async function verifyEd25519(
 }
 
 export async function fetchAndVerifyVaultProofs(): Promise<ProofsFile> {
-  const url = `${XO_VAULT_BASE.replace(/\/$/, '')}/vault/proofs/posts.json`;
+  const url = `${XO_VAULT_API_BASE.replace(/\/$/, '')}/vault/proofs/posts.json`;
   const res = await fetch(url, { headers: { accept: 'application/json' } });
   if (!res.ok) throw new Error(`Vault proofs fetch failed: ${res.status}`);
   const data = (await res.json()) as ProofsFile;

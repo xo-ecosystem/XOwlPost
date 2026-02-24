@@ -5,7 +5,8 @@ export const SITE_TITLE = 'XOwlPost';
 export const SITE_DESCRIPTION = 'Signed posts linked to the XO chain: Vault → Ledger → Digest.';
 
 // XO chain base URLs: env-driven so prod/staging don't require code edits.
-// Set in Cloudflare Pages (or .env): PUBLIC_XO_VAULT_BASE, PUBLIC_XO_LEDGER_BASE, PUBLIC_XO_DIGEST_BASE
+// PUBLIC_XO_VAULT_BASE = viewer (links like "View in Vault" open this).
+// PUBLIC_XO_VAULT_API_BASE = API (proofs fetch, inbox submit); defaults to viewer if unset.
 export const XO_VAULT_BASE =
   (import.meta.env.PUBLIC_XO_VAULT_BASE as string | undefined) ?? 'https://xo-vault.com';
 export const XO_VAULT_API_BASE =
