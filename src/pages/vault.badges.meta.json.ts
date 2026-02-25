@@ -8,7 +8,7 @@ const PLACEHOLDER_KEYS = ['REPLACE_ME', 'REPLACE_ME_BASE64_32B'];
  * Debug/status endpoint for Vault badge verification.
  * Runtime only so it reflects current env/proofs availability.
  */
-export const prerender = false;
+export const prerender = true;
 
 export async function GET() {
   const strict = import.meta.env.PUBLIC_XO_VAULT_PROOFS_STRICT === '1';
