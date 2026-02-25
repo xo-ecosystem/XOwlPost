@@ -32,6 +32,7 @@ Bases for chain links are env-driven with safe defaults. Set in Cloudflare Pages
 |----------|---------|---------|
 | `PUBLIC_XO_VAULT_BASE` | `https://xo-vault.com` | Vault root |
 | `PUBLIC_XO_VAULT_API_BASE` | (falls back to `PUBLIC_XO_VAULT_BASE`) | Vault API root for proofs/inbox |
+| `PUBLIC_XO_VAULT_DEBUG` | `0` | Set to `1` to show debug-only “View Proofs” pill |
 | `PUBLIC_XO_LEDGER_BASE` | `https://xoledger.com` | Ledger root |
 | `PUBLIC_XO_DIGEST_BASE` | `https://xo-digest.com` | Digest root |
 

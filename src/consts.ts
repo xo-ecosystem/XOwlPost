@@ -11,6 +11,7 @@ export const XO_VAULT_BASE =
   (import.meta.env.PUBLIC_XO_VAULT_BASE as string | undefined) ?? 'https://xo-vault.com';
 export const XO_VAULT_API_BASE =
   (import.meta.env.PUBLIC_XO_VAULT_API_BASE as string | undefined)?.trim() || XO_VAULT_BASE;
+export const XO_VAULT_DEBUG = import.meta.env.PUBLIC_XO_VAULT_DEBUG === '1';
 export const XO_LEDGER_BASE =
   (import.meta.env.PUBLIC_XO_LEDGER_BASE as string | undefined) ?? 'https://xoledger.com';
 export const XO_DIGEST_BASE =

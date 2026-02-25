@@ -1,5 +1,11 @@
 ---
-import { XO_DIGEST_BASE, XO_LEDGER_BASE, XO_VAULT_BASE } from '../consts';
+import {
+  XO_DIGEST_BASE,
+  XO_LEDGER_BASE,
+  XO_VAULT_API_BASE,
+  XO_VAULT_BASE,
+  XO_VAULT_DEBUG,
+} from '../consts';
 import { normalizeDigestDay } from '../lib/xo_chain';
 
 interface Props {
@@ -18,9 +24,13 @@ const ledgerDayNorm =
   normalizeDigestDay(ledgerDay) ?? (pubDate ? normalizeDigestDay(pubDate) : undefined);
 
 const viewerBase = XO_VAULT_BASE.replace(/\/$/, '');
+const apiBase = XO_VAULT_API_BASE.replace(/\/$/, '');
 const viewInVaultHref =
   vaultUrl ||
   (ledgerDayNorm ? `${viewerBase}/vault/daily/index.html#${ledgerDayNorm}` : undefined);
+const proofsHref = XO_VAULT_DEBUG
+  ? `${apiBase}/vault/proofs/posts.json`
+  : undefined;
 
 const digestJsonUrl = digestDayNorm
   ? `${XO_DIGEST_BASE}/vault/daily/digest.${encodeURIComponent(digestDayNorm)}.json`
@@ -66,6 +76,9 @@ const hasAny =
       )}
       {viewInVaultHref && (
         <a class="pill" href={viewInVaultHref} target="_blank" rel="noopener noreferrer">View in Vault</a>
+      )}
+      {proofsHref && (
+        <a class="pill muted" href={proofsHref} target="_blank" rel="noopener noreferrer">View Proofs</a>
       )}
       {ledgerDayUrl && (
         <a class="pill" href={ledgerDayUrl} target="_blank" rel="noopener noreferrer">Ledger day</a>
