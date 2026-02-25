@@ -84,6 +84,7 @@ Draft posts (`draft: true`) are excluded from `/posts/`, homepage, RSS, `posts.j
 - `src/pages/meta.json` — Build stamp (commit, branch, builtAt).
 - `src/lib/xo_chain.ts` — `isoDay()`, `normalizeDigestDay()` for canonical day handling.
 - **Vault badge (Phase A):** `src/lib/vault_proofs_key.ts` (Ed25519 public key), `src/lib/vault_proofs.ts` (fetch + verify `XO_VAULT_API_BASE/vault/proofs/posts.json`), `src/pages/vault.badges.json` (runtime/prerender=false endpoint with resilient fallback when key is not configured).
+- **Vault badge debug:** `src/pages/vault.badges.meta.json` reports key/config/proofs status and current badge count.
 - **Signed comments (Phase B):** `src/lib/comments/keys.ts` (client-only WebCrypto Ed25519 keypair in localStorage), `src/components/SignedComments.astro` (comment list + “Sign & Submit” to Vault Inbox). Submit goes to `XO_VAULT_API_BASE/api/inbox/submit`; comments are read from `XO_VAULT_API_BASE/vault/inbox/<slug>/index.json`.
 - `src/content/blog/` — Markdown/MDX; optional frontmatter: `vault_url`, `ledger_day`, `digest_day`, `draft`.
 

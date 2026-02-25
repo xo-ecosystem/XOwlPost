@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { XO_VAULT_BASE } from '../consts';
 import { normalizeDigestDay } from './xo_chain';
 
 export type Crossref = {
@@ -24,6 +25,7 @@ export type Crossref = {
  */
 export async function buildCrossref(): Promise<Crossref> {
   const posts = await getCollection('blog');
+  const viewerBase = XO_VAULT_BASE.replace(/\/$/, '');
 
   const byPost: Crossref['byPost'] = {};
   const byDigestDay: Crossref['byDigestDay'] = {};
@@ -41,13 +43,17 @@ export async function buildCrossref(): Promise<Crossref> {
       normalizeDigestDay(p.data.digest_day) ?? normalizeDigestDay(pubDate);
     const ledgerDay =
       normalizeDigestDay(p.data.ledger_day) ?? normalizeDigestDay(pubDate);
+    const derivedVaultUrl =
+      (typeof p.data.vault_url === 'string' && p.data.vault_url.trim().length > 0)
+        ? p.data.vault_url
+        : (ledgerDay ? `${viewerBase}/vault/daily/index.html#${ledgerDay}` : undefined);
 
     const item = {
       id: p.id,
       title: p.data.title,
       url,
       pubDate: pubDate.toISOString(),
-      vault_url: p.data.vault_url ?? null,
+      vault_url: derivedVaultUrl ?? null,
       ledger_day: ledgerDay ?? undefined,
       digest_day: digestDay ?? undefined,
     };
