@@ -31,8 +31,13 @@ Bases for chain links are env-driven with safe defaults. Set in Cloudflare Pages
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `PUBLIC_XO_VAULT_BASE` | `https://xo-vault.com` | Vault root |
+| `PUBLIC_XO_VAULT_API_BASE` | (falls back to `PUBLIC_XO_VAULT_BASE`) | Vault API root for proofs/inbox |
 | `PUBLIC_XO_LEDGER_BASE` | `https://xoledger.com` | Ledger root |
 | `PUBLIC_XO_DIGEST_BASE` | `https://xo-digest.com` | Digest root |
+
+Sanity check:
+- viewer links (like **View in Vault**) always use `PUBLIC_XO_VAULT_BASE`
+- proofs fetch and inbox submit/read use `PUBLIC_XO_VAULT_API_BASE`
 
 Optional for build stamp (see below):
 
@@ -77,8 +82,8 @@ Draft posts (`draft: true`) are excluded from `/posts/`, homepage, RSS, `posts.j
 - `src/pages/digest/[day].astro` — Day index: “Digest day YYYY-MM-DD” and list of posts referenced that day.
 - `src/pages/meta.json` — Build stamp (commit, branch, builtAt).
 - `src/lib/xo_chain.ts` — `isoDay()`, `normalizeDigestDay()` for canonical day handling.
-- **Vault badge (Phase A):** `src/lib/vault_proofs_key.ts` (Ed25519 public key, replace `REPLACE_ME`), `src/lib/vault_proofs.ts` (fetch + verify `XO_VAULT_BASE/vault/proofs/posts.json`), `src/pages/vault.badges.json` (build-time verified badges). Posts show “Vault Verified ✓” when the Vault-signed proof includes that post URL.
-- **Signed comments (Phase B):** `src/lib/comments/keys.ts` (client-only WebCrypto Ed25519 keypair in localStorage), `src/components/SignedComments.astro` (comment list + “Sign & Submit” to Vault Inbox). Submit goes to `XO_VAULT_BASE/api/inbox/submit`; comments are read from `XO_VAULT_BASE/vault/inbox/posts/<slug>/index.json`.
+- **Vault badge (Phase A):** `src/lib/vault_proofs_key.ts` (Ed25519 public key), `src/lib/vault_proofs.ts` (fetch + verify `XO_VAULT_API_BASE/vault/proofs/posts.json`), `src/pages/vault.badges.json` (runtime/prerender=false endpoint with resilient fallback when key is not configured).
+- **Signed comments (Phase B):** `src/lib/comments/keys.ts` (client-only WebCrypto Ed25519 keypair in localStorage), `src/components/SignedComments.astro` (comment list + “Sign & Submit” to Vault Inbox). Submit goes to `XO_VAULT_API_BASE/api/inbox/submit`; comments are read from `XO_VAULT_API_BASE/vault/inbox/<slug>/index.json`.
 - `src/content/blog/` — Markdown/MDX; optional frontmatter: `vault_url`, `ledger_day`, `digest_day`, `draft`.
 
 ## Post frontmatter (Option B)
