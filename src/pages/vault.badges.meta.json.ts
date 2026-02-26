@@ -6,7 +6,9 @@ const PLACEHOLDER_KEYS = ['REPLACE_ME', 'REPLACE_ME_BASE64_32B'];
 
 /**
  * Debug/status endpoint for Vault badge verification.
- * Runtime only so it reflects current env/proofs availability.
+ *
+ * NOTE: Must be prerendered for Cloudflare Pages (static) deployments.
+ * It still reflects current proofs availability at build time.
  */
 export const prerender = true;
 
