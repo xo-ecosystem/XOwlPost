@@ -20,6 +20,8 @@ export async function GET() {
   const keyConfigured = !!pubKey && !PLACEHOLDER_KEYS.includes(pubKey);
 
   if (!keyConfigured) {
+    if (strict) throw new Error('Vault proofs key not configured');
+
     return new Response(
       JSON.stringify(
         {
@@ -29,6 +31,7 @@ export async function GET() {
           apiBase,
           proofsUrl,
           badgeCount: 0,
+          error: 'Vault proofs key not configured',
           checkedAt: new Date().toISOString(),
         },
         null,

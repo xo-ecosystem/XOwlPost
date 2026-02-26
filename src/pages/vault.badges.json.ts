@@ -11,25 +11,35 @@ const PLACEHOLDER_KEYS = ['REPLACE_ME', 'REPLACE_ME_BASE64_32B'];
 export const prerender = true;
 
 export async function GET() {
-  const strict = process.env.PUBLIC_XO_VAULT_PROOFS_STRICT === '1';
-  let badges: Record<string, { verified: true; [k: string]: unknown }> = {};
+  const strict = import.meta.env.PUBLIC_XO_VAULT_PROOFS_STRICT === '1';
 
-  if (PLACEHOLDER_KEYS.includes(XO_VAULT_PROOFS_PUB_B64)) {
-    if (strict) throw new Error('Vault proofs key not configured');
-  } else {
-    try {
-      badges = await buildVaultBadgesIndex();
-    } catch (e) {
-      if (strict) throw e;
-      badges = {};
+  try {
+    let badges: Record<string, { verified: true; [k: string]: unknown }> = {};
+
+    if (PLACEHOLDER_KEYS.includes(XO_VAULT_PROOFS_PUB_B64)) {
+      if (strict) throw new Error('Vault proofs key not configured');
+    } else {
+      try {
+        badges = await buildVaultBadgesIndex();
+      } catch (e) {
+        if (strict) throw e;
+        badges = {};
+      }
     }
-  }
 
-  return new Response(JSON.stringify(badges, null, 2), {
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control':
-        'public, max-age=300, s-maxage=600, stale-while-revalidate=86400',
-    },
-  });
+    return new Response(JSON.stringify(badges, null, 2), {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=86400',
+      },
+    });
+  } catch (e) {
+    if (strict) throw e;
+    return new Response(JSON.stringify({}, null, 2), {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=300',
+      },
+    });
+  }
 }
