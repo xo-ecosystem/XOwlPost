@@ -13,7 +13,7 @@ const PLACEHOLDER_KEYS = ['REPLACE_ME', 'REPLACE_ME_BASE64_32B'];
 export const prerender = true;
 
 export async function GET() {
-  const strict = import.meta.env.PUBLIC_XO_VAULT_PROOFS_STRICT === '1';
+  const strict = process.env.PUBLIC_XO_VAULT_PROOFS_STRICT === '1';
   const apiBase = XO_VAULT_API_BASE.replace(/\/$/, '');
   const proofsUrl = `${apiBase}/vault/proofs/posts.json`;
   const keyConfigured = !PLACEHOLDER_KEYS.includes(XO_VAULT_PROOFS_PUB_B64);
