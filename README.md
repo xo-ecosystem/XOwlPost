@@ -48,7 +48,42 @@ Optional for build stamp (see below):
 | `CF_PAGES_BRANCH` | Yes | Branch name |
 | `BUILD_COMMIT` | You | Override commit in `/meta.json` |
 | `BUILD_BRANCH` | You | Override branch in `/meta.json` |
+
 | `PUBLIC_XO_VAULT_PROOFS_STRICT` | — | Set to `1` to fail build when Vault proofs are missing/invalid (default: lenient, badge index `{}`) |
+
+
+## Chain Integrity (Vault → Ledger → Digest)
+
+XOwlPost separates **viewer links** from **API verification** to avoid base confusion and future regressions.
+
+### Viewer vs API split
+
+- `PUBLIC_XO_VAULT_BASE` → Used for human-facing links ("View in Vault").
+- `PUBLIC_XO_VAULT_API_BASE` → Used for proofs fetch and Inbox submit/read.
+
+Rules:
+- UI links must never point to the API domain.
+- Proof verification must never depend on the viewer domain.
+
+### Vault badges
+
+`/vault.badges.json`
+- Statically generated at build time.
+- Verifies Ed25519 signature from `XO_VAULT_API_BASE/vault/proofs/posts.json`.
+- Returns `{}` when proofs are unavailable unless strict mode is enabled.
+
+`/vault.badges.meta.json`
+- Health/debug endpoint.
+- Reports key configuration, proofs URL, badge count, and strict mode.
+- `PUBLIC_XO_VAULT_PROOFS_STRICT=1` causes build to fail if proofs are missing or invalid.
+
+### Deterministic behavior
+
+- If proofs succeed → posts show **Vault ✓**.
+- If proofs fail and strict=0 → site builds, badges empty.
+- If proofs fail and strict=1 → build fails intentionally.
+
+This keeps the chain layer predictable and prevents silent integrity drift.
 
 ## Build stamp (which deploy is live)
 
