@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { createHash } from 'node:crypto';
 import { XO_VAULT_BASE } from '../consts';
 import { normalizeDigestDay } from './xo_chain';
 
@@ -13,6 +14,7 @@ export type Crossref = {
       vault_url?: string | null;
       ledger_day?: string;
       digest_day?: string;
+      content_sha256?: string;
     }
   >;
   byDigestDay: Record<string, string[]>; // day → post URLs
@@ -32,6 +34,13 @@ export async function buildCrossref(): Promise<Crossref> {
 
   for (const p of posts) {
     if (p.data.draft) continue;
+
+    // Content-bound integrity (v1.1): hash the raw body (normalized newlines).
+    // This intentionally does NOT include derived links (vault/digest/ledger), so content remains the anchor.
+    const body = (typeof (p as any).body === 'string' ? (p as any).body : '').replace(/\r\n/g, '\n');
+    const contentSha256 = body
+      ? createHash('sha256').update(body, 'utf8').digest('hex')
+      : undefined;
 
     const url = `/posts/${p.id}/`;
     const pubDate =
@@ -56,6 +65,7 @@ export async function buildCrossref(): Promise<Crossref> {
       vault_url: derivedVaultUrl ?? null,
       ledger_day: ledgerDay ?? undefined,
       digest_day: digestDay ?? undefined,
+      content_sha256: contentSha256 ?? undefined,
     };
 
     byPost[url] = item;

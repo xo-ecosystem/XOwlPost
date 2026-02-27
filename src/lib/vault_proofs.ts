@@ -1,3 +1,54 @@
+import { getCollection } from 'astro:content';
+import { createHash } from 'node:crypto';
+import { XO_VAULT_BASE } from '../consts';
+import { normalizeDigestDay } from './xo_chain';
+
+export type Crossref = Record<
+  string,
+  {
+    vault_url?: string;
+    digest_day?: string;
+    content_sha256?: string;
+  }
+>;
+
+export async function buildCrossref() {
+  const posts = await getCollection('posts');
+  const out: Crossref = {};
+
+  for (const p of posts) {
+    if (p.data.draft) continue;
+
+    // Content-bound integrity (v1.1): hash the raw body (normalized newlines).
+    // This intentionally does NOT include derived links (vault/digest/ledger), so content remains the anchor.
+    const body = (typeof (p as any).body === 'string' ? (p as any).body : '').replace(/\r\n/g, '\n');
+    const contentSha256 = body
+      ? createHash('sha256').update(body, 'utf8').digest('hex')
+      : undefined;
+
+    const url = `${XO_VAULT_BASE.replace(/\/$/, '')}/${p.slug}`;
+    const pubDate = new Date(p.data.pubDate);
+    const digestDay = normalizeDigestDay(p.data.digestDay);
+    const ledgerDay = p.data.ledgerDay;
+    const derivedVaultUrl = p.data.vaultUrl;
+
+    const item = {
+      id: p.id,
+      title: p.data.title,
+      url,
+      pubDate: pubDate.toISOString(),
+      vault_url: derivedVaultUrl ?? null,
+      ledger_day: ledgerDay ?? undefined,
+      digest_day: digestDay ?? undefined,
+      content_sha256: contentSha256 ?? undefined,
+    };
+
+    out[url] = item;
+  }
+
+  return out;
+}
+
 import { XO_VAULT_API_BASE } from '../consts';
 import { XO_VAULT_PROOFS_PUB_B64 } from './vault_proofs_key';
 
@@ -17,9 +68,10 @@ export type ProofsFile = {
 };
 
 function b64ToBytes(b64: string): Uint8Array {
-  const bin = typeof Buffer !== 'undefined'
-    ? Buffer.from(b64, 'base64')
-    : new Uint8Array([...atob(b64)].map((c) => c.charCodeAt(0)));
+  const bin =
+    typeof Buffer !== 'undefined'
+      ? Buffer.from(b64, 'base64')
+      : new Uint8Array([...atob(b64)].map((c) => c.charCodeAt(0)));
   return new Uint8Array(bin);
 }
 
@@ -27,7 +79,11 @@ function stableStringify(obj: unknown): string {
   if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
   if (Array.isArray(obj)) return `[${obj.map(stableStringify).join(',')}]`;
   const keys = Object.keys(obj as object).sort();
-  return `{${keys.map((k) => JSON.stringify(k) + ':' + stableStringify((obj as Record<string, unknown>)[k])).join(',')}}`;
+  return `{${keys
+    .map((k) =>
+      JSON.stringify(k) + ':' + stableStringify((obj as Record<string, unknown>)[k]),
+    )
+    .join(',')}}`;
 }
 
 async function verifyEd25519(
@@ -35,13 +91,9 @@ async function verifyEd25519(
   sig: Uint8Array,
   pub: Uint8Array,
 ): Promise<boolean> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    pub,
-    { name: 'Ed25519' },
-    false,
-    ['verify'],
-  );
+  const key = await crypto.subtle.importKey('raw', pub, { name: 'Ed25519' }, false, [
+    'verify',
+  ]);
   return crypto.subtle.verify('Ed25519', key, sig, msg);
 }
 
