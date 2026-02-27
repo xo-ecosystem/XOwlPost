@@ -4,6 +4,7 @@ import { XO_VAULT_BASE } from '../consts';
 import { normalizeDigestDay } from './xo_chain';
 
 export type Crossref = {
+  version: number;
   byPost: Record<
     string,
     {
@@ -26,7 +27,8 @@ export type Crossref = {
  * Option B: invalid digest_day → fallback to pubDate; invalid pubDate → omit digest linking.
  */
 export async function buildCrossref(): Promise<Crossref> {
-  const posts = await getCollection('blog');
+  const postsRaw = await getCollection('blog');
+  const posts = [...postsRaw].sort((a, b) => a.id.localeCompare(b.id));
   const viewerBase = XO_VAULT_BASE.replace(/\/$/, '');
 
   const byPost: Crossref['byPost'] = {};
@@ -35,9 +37,19 @@ export async function buildCrossref(): Promise<Crossref> {
   for (const p of posts) {
     if (p.data.draft) continue;
 
-    // Content-bound integrity (v1.1): hash the raw body (normalized newlines).
-    // This intentionally does NOT include derived links (vault/digest/ledger), so content remains the anchor.
-    const body = (typeof (p as any).body === 'string' ? (p as any).body : '').replace(/\r\n/g, '\n');
+    const rawBody = typeof (p as any).body === 'string' ? (p as any).body : '';
+
+    // Normalize:
+    // 1) CRLF → LF
+    // 2) trim trailing whitespace per line
+    // 3) collapse 3+ blank lines → 2
+    const body = rawBody
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map((line) => line.replace(/[ \t]+$/g, ''))
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n');
+
     const contentSha256 = body
       ? createHash('sha256').update(body, 'utf8').digest('hex')
       : undefined;
@@ -79,5 +91,15 @@ export async function buildCrossref(): Promise<Crossref> {
     byDigestDay[day].sort();
   }
 
-  return { byPost, byDigestDay };
+  // Ensure stable key order for deterministic JSON output
+  const sortedByPost = Object.fromEntries(
+    Object.entries(byPost).sort(([a], [b]) => a.localeCompare(b))
+  );
+
+  return {
+    version: 1,
+    hashRules: "v1",
+    byPost: sortedByPost,
+    byDigestDay,
+  };
 }
